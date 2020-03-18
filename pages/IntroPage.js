@@ -12,6 +12,15 @@ const IntroPage = props => {
         <Text style={styles.tagline}>compress your files..</Text>
       </View>
 
+      <View style={styles.features}>
+        <Image
+          style={styles.coverImage}
+          source={{
+            uri: 'https://img.icons8.com/cute-clipart/100/000000/compress.png',
+          }}
+        />
+      </View>
+
       <View style={styles.buttonsContainer}>
         <View style={styles.button}>
           <Button
@@ -45,7 +54,8 @@ const styles = StyleSheet.create({
   },
 
   tagline: {
-    fontSize: 15,
+    marginTop: 25,
+    fontSize: 18,
     color: 'white',
     padding: 5,
   },
@@ -56,7 +66,7 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    marginTop: 20,
+    marginTop: 200,
   },
 
   features: {
@@ -66,8 +76,8 @@ const styles = StyleSheet.create({
   },
 
   coverImage: {
-    width: '80%',
-    height: 200,
+    width: '60%',
+    height: 300,
   },
 
   headerImage: {
