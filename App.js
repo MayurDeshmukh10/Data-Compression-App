@@ -3,6 +3,7 @@ import {createStackNavigator} from 'react-navigation-stack';
 import React from 'react';
 
 import IntroPage from './pages/IntroPage';
+import listPage from './pages/listPage';
 
 const RootStack = createStackNavigator({
   Intro: {
@@ -12,7 +13,14 @@ const RootStack = createStackNavigator({
     },
     path: 'intro',
   },
-  initialRouteName: 'Intro',
+  list: {
+    screen: listPage,
+    navigationOptions: {
+      headerTitle: 'Select Compression Type',
+    },
+    path: 'list',
+  },
+  initialRouteName: 'intro',
 });
 
 const AppContainer = createAppContainer(RootStack);
