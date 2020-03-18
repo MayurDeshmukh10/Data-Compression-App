@@ -27,7 +27,7 @@ const IntroPage = props => {
             color="info"
             size="small"
             round
-            onPress={() => navigation.navigate('SignUp')}>
+            onPress={() => navigation.navigate('list')}>
             lets compress
           </Button>
         </View>
