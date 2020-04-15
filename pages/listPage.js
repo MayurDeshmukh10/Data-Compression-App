@@ -22,7 +22,7 @@ const listPage = props => {
             color="info"
             size="small"
             round
-            onPress={() => navigation.navigate('SignUp')}>
+            onPress={() => navigation.navigate('image')}>
             Image Compression
           </Button>
         </View>
@@ -43,7 +43,7 @@ const listPage = props => {
             color="info"
             size="small"
             round
-            onPress={() => navigation.navigate('SignUp')}>
+            onPress={() => navigation.navigate('audio')}>
             Audio Compression
           </Button>
         </View>

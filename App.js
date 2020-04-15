@@ -4,6 +4,8 @@ import React from 'react';
 
 import IntroPage from './pages/IntroPage';
 import listPage from './pages/listPage';
+import audioCompression from './pages/audioCompression';
+import imageCompression from './pages/imageCompression';
 
 const RootStack = createStackNavigator({
   Intro: {
@@ -19,6 +21,20 @@ const RootStack = createStackNavigator({
       headerTitle: 'Select Compression Type',
     },
     path: 'list',
+  },
+  image: {
+    screen: imageCompression,
+    navigationOptions: {
+      headerTitle: 'Image Compression',
+    },
+    path: 'image',
+  },
+  audio: {
+    screen: audioCompression,
+    navigationOptions: {
+      headerTitle: 'Audio Compression',
+    },
+    path: 'audio',
   },
   initialRouteName: 'intro',
 });
