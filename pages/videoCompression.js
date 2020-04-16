@@ -17,16 +17,17 @@ import RNFetchBlob from 'rn-fetch-blob';
 import * as RNFS from 'react-native-fs';
 import AnimatedLoader from 'react-native-animated-loader';
 
-const audioCompression = props => {
+const videoCompression = props => {
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedfile, setSelected] = useState('No Audio file selected');
-  let [audioData, setaudioData] = useState('');
+  const [selectedfile, setSelected] = useState('No Video file selected');
+  let [videoData, setvideoData] = useState('');
   let [fileSize, setFileSize] = useState('');
   let [compressedFileSize, setCompressedFileSize] = useState('');
-  let [audioName, setAudioName] = useState('');
+  let [videoName, setVideoName] = useState('');
   let audioType = '';
   //let audioData = '';
   let audioURI = '';
+  let audioName = '';
   let audioPath = '';
   let audioSize = '';
   const {navigation} = props;
@@ -69,20 +70,20 @@ const audioCompression = props => {
     }
   };
 
-  const postAudio = () => {
+  const postVideo = () => {
     setIsLoading(true);
-    console.log(audioData);
+    console.log(videoData);
     let dirs = RNFetchBlob.fs.dirs;
     RNFetchBlob.config({
       trusty: true,
     })
       .fetch(
         'POST',
-        'https://service.eu.apiconnect.ibmcloud.com/gws/apigateway/api/6680cf59d332053774ebff7968541738e498ef46b8d4df20fb25851b3dcca438/compression/audio_compression_app',
+        'https://service.eu.apiconnect.ibmcloud.com/gws/apigateway/api/6680cf59d332053774ebff7968541738e498ef46b8d4df20fb25851b3dcca438/compression/video_compression_app',
         {
-          'Content-Type': 'audio/mpeg',
+          'Content-Type': 'video/mp4',
         },
-        audioData,
+        videoData,
       )
       .then(resp => {
         setIsLoading(false);
@@ -99,7 +100,7 @@ const audioCompression = props => {
         console.log(compressedsize);
         let base64str = resp.base64();
         // console.log(base64str);
-        var path = '/storage/emulated/0/compressed_' + audioName;
+        var path = '/storage/emulated/0/compressed_' + videoName;
         //var path = RNFS.DocumentDirectoryPath + '/compressed.jpg';
         console.log('PATH', path);
         RNFS.writeFile(path, base64str, 'base64')
@@ -121,23 +122,25 @@ const audioCompression = props => {
       });
   };
 
-  const selectAudio = async () => {
+  const selectVideo = async () => {
     requestWritePermission();
-    const res = await DocumentPicker.pick({type: [DocumentPicker.types.audio]});
+    const res = await DocumentPicker.pick({type: [DocumentPicker.types.video]});
     //console.log(res);
     const exportedFileContent = await RNFS.readFile(res.uri, 'base64');
     //audioData = exportedFileContent;
-    setaudioData(exportedFileContent);
-    console.log(audioData);
-    setAudioName(res.name);
+    setvideoData(exportedFileContent);
+    console.log(videoData);
+    setVideoName(res.name);
     audioURI = res.uri;
-    audioType = res.type;
-    audioSize = res.size;
-    audioSize = parseInt(audioSize);
-    audioSize = audioSize / 1000000;
-    audioSize = audioSize.toString();
-    setFileSize('File Size : ' + audioSize + ' MB');
-    setSelected(audioName);
+    let videoSize = '';
+    let videoType = '';
+    videoType = res.type;
+    videoSize = res.size;
+    videoSize = parseInt(videoSize);
+    videoSize = videoSize / 1000000;
+    videoSize = videoSize.toString();
+    setFileSize('File Size : ' + videoSize + ' MB');
+    setSelected(res.name);
     ToastAndroid.showWithGravity(
       'File Selected !',
       ToastAndroid.LONG,
@@ -169,14 +172,14 @@ const audioCompression = props => {
           </View>
           <View style={styles.buttonsContainer}>
             <View style={styles.button1}>
-              <Button color="info" size="small" round onPress={selectAudio}>
-                Select Audio file
+              <Button color="info" size="small" round onPress={selectVideo}>
+                Select Video file
               </Button>
             </View>
           </View>
           <View style={styles.buttonsContainer}>
             <View style={styles.button1}>
-              <Button color="info" size="small" round onPress={postAudio}>
+              <Button color="info" size="small" round onPress={postVideo}>
                 Compress
               </Button>
             </View>
@@ -278,4 +281,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default audioCompression;
+export default videoCompression;

@@ -64,12 +64,12 @@ const listPage = props => {
             color="info"
             size="small"
             round
-            onPress={() => navigation.navigate('SignUp')}>
+            onPress={() => navigation.navigate('video')}>
             Video Compression
           </Button>
         </View>
       </View>
-
+      {/*
       <View style={styles.features}>
         <Image
           style={styles.coverImage}
@@ -78,9 +78,9 @@ const listPage = props => {
               'https://img.icons8.com/color/96/000000/align-cell-content-left.png',
           }}
         />
-      </View>
+      </View> */}
 
-      <View style={styles.buttonsContainer}>
+      {/* <View style={styles.buttonsContainer}>
         <View style={styles.button1}>
           <Button
             color="info"
@@ -90,7 +90,7 @@ const listPage = props => {
             Text Compression
           </Button>
         </View>
-      </View>
+      </View> */}
     </ScrollView>
   );
 };

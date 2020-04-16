@@ -20,10 +20,15 @@ import AnimatedLoader from 'react-native-animated-loader';
 
 const imageCompression = props => {
   const [isLoading, setIsLoading] = useState(false);
+  let [imageDisplay, setImageDisplay] = useState(
+    'https://img.icons8.com/color/96/000000/image.png',
+  );
+  let [fileSize, setFileSize] = useState('Select a image');
+  let [compressedFileSize, setCompressedFileSize] = useState('');
+  let [imageData, setimageData] = useState('');
+  let [imageName, setImageName] = useState('');
   let imageType = '';
-  let imageData = '';
   let imageURI = '';
-  let imageName = '';
   let imagePath = '';
   let imageSize = '';
   const {navigation} = props;
@@ -75,12 +80,17 @@ const imageCompression = props => {
       console.log('Response = ', response);
       imageType = response.type;
       imageURI = response.uri;
-      imageName = response.fileName;
+      setImageName(response.fileName);
       console.log(imageName);
-      imageData = response.data;
+      setimageData(response.data);
       imagePath = 'file://' + response.path;
+      setImageDisplay(imagePath);
       console.log(imagePath);
       imageSize = response.fileSize;
+      imageSize = parseInt(imageSize);
+      imageSize = imageSize / 1000000;
+      imageSize = imageSize.toString();
+      setFileSize('Image Size : ' + imageSize + ' MB');
 
       if (response.didCancel) {
         console.log('User cancelled image picker');
@@ -120,6 +130,15 @@ const imageCompression = props => {
       )
       .then(resp => {
         setIsLoading(false);
+        let info = resp.respInfo;
+        let header = info.headers;
+        let compressedsize = header['Content-Length'];
+        compressedsize = parseInt(compressedsize);
+        compressedsize = compressedsize / 1000000;
+        compressedsize = compressedsize.toString();
+        setCompressedFileSize(
+          'Compressed file size : ' + compressedsize + ' MB',
+        );
         let base64str = resp.base64();
         console.log(base64str);
         console.log(imageName);
@@ -138,42 +157,12 @@ const imageCompression = props => {
           ToastAndroid.LONG,
           ToastAndroid.BOTTOM,
         );
+        alert('Compression Successful');
       })
       .catch(err => {
         console.log(err);
       });
   };
-  const postImage1 = () => {
-    console.log(imageData);
-    const data = new FormData();
-    data.append(imageData);
-    fetch(
-      'https://service.eu.apiconnect.ibmcloud.com/gws/apigateway/api/6680cf59d332053774ebff7968541738e498ef46b8d4df20fb25851b3dcca438/compression/image_compression_app',
-      {
-        method: 'post',
-        body: data,
-      },
-    )
-      .then(res => {
-        console.log(res.blob());
-        console.log(res.url);
-      })
-      .catch(function(error) {
-        console.log('Error' + error);
-      });
-  };
-
-  // async selectFile = () => {
-  //   const res = await DocumentPicker.pick({type: [DocumentPicker.types.allFiles]});
-
-  // };
-
-  //   const res = DocumentPicker.pick({type: [DocumentPicker.types.allFiles]});
-  // const res = selectFile();
-  // console.log('URI : ' + res.uri);
-  // console.log('URI : ' + res.type);
-  // console.log('URI : ' + res.name);
-  // console.log('URI : ' + res.uri);
 
   return (
     <ScrollView style={styles.body}>
@@ -195,9 +184,12 @@ const imageCompression = props => {
             <Image
               style={styles.coverImage}
               source={{
-                uri: imagePath,
+                uri: imageDisplay,
               }}
             />
+          </View>
+          <View style={styles.fileSizeContainer}>
+            <Text style={styles.fileSizeText}>{fileSize}</Text>
           </View>
           <View style={styles.buttonsContainer}>
             <View style={styles.button1}>
@@ -213,6 +205,9 @@ const imageCompression = props => {
                 Compress
               </Button>
             </View>
+          </View>
+          <View style={styles.fileSizeContainer}>
+            <Text style={styles.fileSizeText}>{compressedFileSize}</Text>
           </View>
         </>
       )}
@@ -253,12 +248,33 @@ const styles = StyleSheet.create({
     color: 'white',
     padding: 5,
   },
+  filetext: {
+    flex: 1,
+    color: 'white',
+    fontSize: 18,
+  },
+  fileTextContainer: {
+    marginTop: 100,
+    flex: 1,
+    alignItems: 'center',
+  },
+  fileSizeContainer: {
+    marginTop: 30,
+    flex: 1,
+    alignItems: 'center',
+  },
+  fileSizeText: {
+    flex: 1,
+    color: 'white',
+    fontSize: 15,
+  },
   loaderContainer: {
     flex: 1,
     alignItems: 'center',
   },
 
   buttonsContainer: {
+    marginTop: 50,
     alignItems: 'center',
     padding: 10,
   },
@@ -268,6 +284,7 @@ const styles = StyleSheet.create({
   },
 
   features: {
+    marginTop: 20,
     padding: 10,
     height: 200,
     alignItems: 'center',

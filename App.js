@@ -6,6 +6,7 @@ import IntroPage from './pages/IntroPage';
 import listPage from './pages/listPage';
 import audioCompression from './pages/audioCompression';
 import imageCompression from './pages/imageCompression';
+import videoCompression from './pages/videoCompression';
 
 const RootStack = createStackNavigator({
   Intro: {
@@ -35,6 +36,13 @@ const RootStack = createStackNavigator({
       headerTitle: 'Audio Compression',
     },
     path: 'audio',
+  },
+  video: {
+    screen: videoCompression,
+    navigationOptions: {
+      headerTitle: 'Video Compression',
+    },
+    path: 'video',
   },
   initialRouteName: 'intro',
 });
