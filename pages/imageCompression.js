@@ -7,6 +7,7 @@ import {
   ScrollView,
   PermissionsAndroid,
   Image,
+  Alert,
   ToastAndroid,
   ActivityIndicator,
 } from 'react-native';
@@ -17,6 +18,7 @@ import ImagePicker from 'react-native-image-picker';
 import RNFetchBlob from 'rn-fetch-blob';
 import * as RNFS from 'react-native-fs';
 import AnimatedLoader from 'react-native-animated-loader';
+import AwesomeAlert from 'react-native-awesome-alerts';
 
 const imageCompression = props => {
   const [isLoading, setIsLoading] = useState(false);
@@ -27,10 +29,14 @@ const imageCompression = props => {
   let [compressedFileSize, setCompressedFileSize] = useState('');
   let [imageData, setimageData] = useState('');
   let [imageName, setImageName] = useState('');
+  let [myalert, setAlert] = useState(false);
+  let [msg, setMsg] = useState('');
+
   let imageType = '';
   let imageURI = '';
   let imagePath = '';
   let imageSize = '';
+  let ext = '';
   const {navigation} = props;
 
   let options = {
@@ -76,21 +82,37 @@ const imageCompression = props => {
   };
   const selectImage = () => {
     requestWritePermission();
+    //setCompressedFileSize("");
     ImagePicker.showImagePicker(options, response => {
       console.log('Response = ', response);
       imageType = response.type;
       imageURI = response.uri;
       setImageName(response.fileName);
       console.log(imageName);
+      ext = imageName.split('.').pop();
+      if (ext === 'ico') {
+        alert('Please select jpeg, png, tiff and webp images only !!!');
+      }
       setimageData(response.data);
       imagePath = 'file://' + response.path;
       setImageDisplay(imagePath);
       console.log(imagePath);
-      imageSize = response.fileSize;
-      imageSize = parseInt(imageSize);
-      imageSize = imageSize / 1000000;
-      imageSize = imageSize.toString();
-      setFileSize('Image Size : ' + imageSize + ' MB');
+      let imageSize1;
+      let originalsize;
+      let original_type = '';
+      imageSize1 = response.fileSize;
+      imageSize = imageSize1 / 1000000;
+      if (imageSize > 1) {
+        originalsize = imageSize;
+        original_type = 'MB';
+      } else {
+        originalsize = imageSize1 / 1000;
+        original_type = 'KB';
+      }
+      // imageSize1 = parseInt(imageSize);
+      // imageSize = imageSize1 / 1000000;
+      // imageSize = imageSize.toString();
+      setFileSize('Image Size : ' + originalsize + original_type);
 
       if (response.didCancel) {
         console.log('User cancelled image picker');
@@ -115,52 +137,133 @@ const imageCompression = props => {
 
   const postImage = () => {
     setIsLoading(true);
+    let content_type = '';
+    ext = imageName.split('.').pop();
+    console.log('ext : ', ext);
+    if (ext === 'jpeg' || ext === 'jpg') {
+      content_type = 'image/jpeg';
+    } else if (ext == 'png') {
+      content_type = 'image/png';
+    } else if (ext == 'tiff') {
+      content_type = 'image/tiff';
+    } else if (ext == 'webp') {
+      content_type = 'image/webp';
+    }
+    const data = new FormData();
+    data.append('file', imageData);
 
     let dirs = RNFetchBlob.fs.dirs;
     RNFetchBlob.config({
       trusty: true,
+      timeout: 600000,
     })
       .fetch(
         'POST',
-        'https://service.eu.apiconnect.ibmcloud.com/gws/apigateway/api/6680cf59d332053774ebff7968541738e498ef46b8d4df20fb25851b3dcca438/compression/image_compression_app',
+        // 'http://192.168.1.108:3000/api/v1/image_compression_app',
+        'https://data-compression-platform.eu-gb.cf.appdomain.cloud/api/v1/image_compression_app',
         {
-          'Content-Type': 'image/jpeg',
+          'Content-Type': content_type,
         },
         imageData,
       )
       .then(resp => {
+        console.log(resp);
         setIsLoading(false);
         let info = resp.respInfo;
-        let header = info.headers;
-        let compressedsize = header['Content-Length'];
-        compressedsize = parseInt(compressedsize);
-        compressedsize = compressedsize / 1000000;
-        compressedsize = compressedsize.toString();
-        setCompressedFileSize(
-          'Compressed file size : ' + compressedsize + ' MB',
-        );
-        let base64str = resp.base64();
-        console.log(base64str);
-        console.log(imageName);
-        var path = '/storage/emulated/0/compressed_' + imageName;
-        //var path = RNFS.DocumentDirectoryPath + '/compressed.jpg';
-        console.log('PATH', path);
-        RNFS.writeFile(path, base64str, 'base64')
-          .then(success => {
-            console.log('FILE WRITTEN!');
-          })
-          .catch(err => {
-            console.log(err.message);
-          });
-        ToastAndroid.showWithGravity(
-          'Compression Completed !!!',
-          ToastAndroid.LONG,
-          ToastAndroid.BOTTOM,
-        );
-        alert('Compression Successful');
+        let status_code = info.status;
+        console.log(status_code);
+        if (status_code === 200) {
+          let header = info.headers;
+          let base64str = resp.base64();
+          let compressedsize = header['Content-Length'];
+          console.log('Compressed size : ', compressedsize);
+          compressedsize = parseInt(compressedsize);
+          compressedsize = compressedsize / 1000000;
+          compressedsize = compressedsize.toString();
+          let padding, inBytes, base64StringLength;
+          if (base64str.endsWith('==')) {
+            padding = 2;
+          } else if (base64str.endsWith('=')) {
+            padding = 1;
+          } else {
+            padding = 0;
+          }
+          base64StringLength = base64str.length;
+          console.log(base64StringLength);
+          inBytes = (base64StringLength / 4) * 3 - padding;
+          console.log(inBytes);
+          let size_type = '';
+          let final_size;
+          compressedsize = inBytes / 1000000;
+          if (compressedsize > 1) {
+            final_size = compressedsize;
+            size_type = ' MB';
+          } else {
+            final_size = inBytes / 1000;
+            size_type = ' KB';
+          }
+          setCompressedFileSize(
+            'Compressed file size : ' + final_size + size_type,
+          );
+          setMsg('Compressed Image is stored in Internal Storage');
+
+          // console.log('resp base64', base64str);
+          //console.log(base64str);
+          console.log('imageName');
+          console.log(imageName);
+          var path = '/storage/emulated/0/compressed_' + imageName;
+          //var path = RNFS.DocumentDirectoryPath + '/compressed.jpg';
+          console.log('PATH', path);
+          RNFS.writeFile(path, base64str, 'base64')
+            .then(success => {
+              console.log('FILE WRITTEN!');
+            })
+            .catch(err => {
+              console.log('fsdfdfsfd');
+              setIsLoading(false);
+              alert('Some Error has Occured !!!');
+              console.log(err.message);
+            });
+          ToastAndroid.showWithGravity(
+            'Compression Completed !!!',
+            ToastAndroid.LONG,
+            ToastAndroid.BOTTOM,
+          );
+          Alert.alert(
+            'Status',
+            'Image successfully compressed !!!',
+            [{text: 'OK', onPress: () => console.log('OK Pressed')}],
+            {cancelable: false},
+          );
+          setAlert(true);
+        } else if (status_code === 406) {
+          Alert.alert(
+            'Status',
+            'Image is too small to compress. Please select another image',
+            [{text: 'OK', onPress: () => console.log('OK Pressed')}],
+            {cancelable: false},
+          );
+          setAlert(true);
+        } else {
+          Alert.alert(
+            'Status',
+            'Some Error has occured, Please try again !!!',
+            [{text: 'OK', onPress: () => console.log('OK Pressed')}],
+            {cancelable: false},
+          );
+          setAlert(true);
+        }
       })
       .catch(err => {
+        setIsLoading(false);
         console.log(err);
+        Alert.alert(
+          'Status',
+          'Some Error has occured, Please try again !!!',
+          [{text: 'OK', onPress: () => console.log('OK Pressed')}],
+          {cancelable: false},
+        );
+        setAlert(true);
       });
   };
 
@@ -170,13 +273,28 @@ const imageCompression = props => {
         <>
           <AnimatedLoader
             visible={isLoading}
-            source={require('./animation.json')}
+            source={require('./infinity-loader.json')}
             animationStyle={styles.lottie}
             speed={1}
           />
           <View style={styles.compress}>
             <Text>Compressing...</Text>
           </View>
+          {/* <AwesomeAlert
+            show={myalert}
+            showProgress={false}
+            title="AwesomeAlert"
+            message="I have a message for you!"
+            closeOnTouchOutside={true}
+            closeOnHardwareBackPress={false}
+            showCancelButton={false}
+            showConfirmButton={true}
+            confirmText="Okay"
+            confirmButtonColor="#DD6B55"
+            onConfirmPressed={() => {
+              setAlert(false);
+            }}
+          /> */}
         </>
       ) : (
         <>
@@ -208,6 +326,7 @@ const imageCompression = props => {
           </View>
           <View style={styles.fileSizeContainer}>
             <Text style={styles.fileSizeText}>{compressedFileSize}</Text>
+            <Text style={styles.fileSizeText}>{msg}</Text>
           </View>
         </>
       )}

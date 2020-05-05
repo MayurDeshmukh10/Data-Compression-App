@@ -6,7 +6,7 @@ import {
   Text,
   ScrollView,
   PermissionsAndroid,
-  Image,
+  Alert,
   ToastAndroid,
 } from 'react-native';
 import {Button} from 'galio-framework';
@@ -24,6 +24,7 @@ const videoCompression = props => {
   let [fileSize, setFileSize] = useState('');
   let [compressedFileSize, setCompressedFileSize] = useState('');
   let [videoName, setVideoName] = useState('');
+  let [msg, setMsg] = useState('');
   let audioType = '';
   //let audioData = '';
   let audioURI = '';
@@ -76,10 +77,12 @@ const videoCompression = props => {
     let dirs = RNFetchBlob.fs.dirs;
     RNFetchBlob.config({
       trusty: true,
+      timeout: 600000,
     })
       .fetch(
         'POST',
-        'https://service.eu.apiconnect.ibmcloud.com/gws/apigateway/api/6680cf59d332053774ebff7968541738e498ef46b8d4df20fb25851b3dcca438/compression/video_compression_app',
+        // 'http://192.168.1.108:3000/api/v1/video_compression_app',
+        'https://data-compression-platform.eu-gb.cf.appdomain.cloud/api/v1/video_compression_app',
         {
           'Content-Type': 'video/mp4',
         },
@@ -89,36 +92,78 @@ const videoCompression = props => {
         setIsLoading(false);
         console.log('MAYUR: ', resp);
         let info = resp.respInfo;
-        let header = info.headers;
-        let compressedsize = header['Content-Length'];
-        compressedsize = parseInt(compressedsize);
-        compressedsize = compressedsize / 1000000;
-        compressedsize = compressedsize.toString();
-        setCompressedFileSize(
-          'Compressed file size : ' + compressedsize + ' MB',
-        );
-        console.log(compressedsize);
-        let base64str = resp.base64();
-        // console.log(base64str);
-        var path = '/storage/emulated/0/compressed_' + videoName;
-        //var path = RNFS.DocumentDirectoryPath + '/compressed.jpg';
-        console.log('PATH', path);
-        RNFS.writeFile(path, base64str, 'base64')
-          .then(success => {
-            console.log('FILE WRITTEN!');
-          })
-          .catch(err => {
-            console.log(err.message);
-          });
-        alert('Compression Completed !!!');
-        ToastAndroid.showWithGravity(
-          'Compression Completed !!!',
-          ToastAndroid.LONG,
-          ToastAndroid.BOTTOM,
-        );
+        let status_code = info.status;
+        if (status_code === 200) {
+          let header = info.headers;
+          let compressedsize = header['Content-Length'];
+          let base64str = resp.base64();
+          let padding, inBytes, base64StringLength;
+          if (base64str.endsWith('==')) {
+            padding = 2;
+          } else if (base64str.endsWith('=')) {
+            padding = 1;
+          } else {
+            padding = 0;
+          }
+          base64StringLength = base64str.length;
+          console.log(base64StringLength);
+          inBytes = (base64StringLength / 4) * 3 - padding;
+          console.log(inBytes);
+          let size_type = '';
+          let final_size;
+          compressedsize = inBytes / 1000000;
+          if (compressedsize > 1) {
+            final_size = compressedsize;
+            size_type = ' MB';
+          } else {
+            final_size = inBytes / 1000;
+            size_type = ' KB';
+          }
+          setCompressedFileSize(
+            'Compressed file size : ' + final_size + size_type,
+          );
+          setMsg('Compressed Video is stored in Internal Storage');
+          console.log(compressedsize);
+
+          // console.log(base64str);
+          var path = '/storage/emulated/0/compressed_' + videoName;
+          //var path = RNFS.DocumentDirectoryPath + '/compressed.jpg';
+          console.log('PATH', path);
+          RNFS.writeFile(path, base64str, 'base64')
+            .then(success => {
+              console.log('FILE WRITTEN!');
+            })
+            .catch(err => {
+              console.log(err.message);
+            });
+          Alert.alert(
+            'Status',
+            'Video successfully compressed !!!',
+            [{text: 'OK', onPress: () => console.log('OK Pressed')}],
+            {cancelable: false},
+          );
+          ToastAndroid.showWithGravity(
+            'Compression Completed !!!',
+            ToastAndroid.LONG,
+            ToastAndroid.BOTTOM,
+          );
+        } else {
+          Alert.alert(
+            'Status',
+            'Some Error has occured, Please try again !!!',
+            [{text: 'OK', onPress: () => console.log('OK Pressed')}],
+            {cancelable: false},
+          );
+        }
       })
       .catch(err => {
         console.log(err);
+        Alert.alert(
+          'Status',
+          'Some Error has occured, Please try again !!!',
+          [{text: 'OK', onPress: () => console.log('OK Pressed')}],
+          {cancelable: false},
+        );
       });
   };
 
@@ -135,11 +180,19 @@ const videoCompression = props => {
     let videoSize = '';
     let videoType = '';
     videoType = res.type;
-    videoSize = res.size;
-    videoSize = parseInt(videoSize);
-    videoSize = videoSize / 1000000;
-    videoSize = videoSize.toString();
-    setFileSize('File Size : ' + videoSize + ' MB');
+    audioSize = res.size;
+    let originalsize;
+    let original_type = '';
+    let audio_s;
+    audio_s = audioSize / 1000000;
+    if (audio_s > 1) {
+      originalsize = audio_s;
+      original_type = ' MB';
+    } else {
+      originalsize = audioSize / 1000;
+      original_type = ' KB';
+    }
+    setFileSize('File Size : ' + originalsize + original_type);
     setSelected(res.name);
     ToastAndroid.showWithGravity(
       'File Selected !',
@@ -154,7 +207,7 @@ const videoCompression = props => {
         <>
           <AnimatedLoader
             visible={isLoading}
-            source={require('./animation.json')}
+            source={require('./infinity-loader.json')}
             animationStyle={styles.lottie}
             speed={1}
           />
@@ -186,6 +239,7 @@ const videoCompression = props => {
           </View>
           <View style={styles.fileSizeContainer}>
             <Text style={styles.fileSizeText}>{compressedFileSize}</Text>
+            <Text style={styles.fileSizeText}>{msg}</Text>
           </View>
         </>
       )}

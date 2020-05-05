@@ -6,7 +6,7 @@ import {
   Text,
   ScrollView,
   PermissionsAndroid,
-  Image,
+  Alert,
   ToastAndroid,
 } from 'react-native';
 import {Button} from 'galio-framework';
@@ -24,6 +24,8 @@ const audioCompression = props => {
   let [fileSize, setFileSize] = useState('');
   let [compressedFileSize, setCompressedFileSize] = useState('');
   let [audioName, setAudioName] = useState('');
+  let [myalert, setAlert] = useState(false);
+  let [msg, setMsg] = useState('');
   let audioType = '';
   //let audioData = '';
   let audioURI = '';
@@ -72,15 +74,25 @@ const audioCompression = props => {
   const postAudio = () => {
     setIsLoading(true);
     console.log(audioData);
+    let content_type = '';
+    let ext = audioName.split('.').pop();
+    console.log('ext : ', ext);
+    if (ext === 'mp3') {
+      content_type = 'audio/mpeg';
+    } else if (ext === 'wav') {
+      content_type = 'audio/wav';
+    }
     let dirs = RNFetchBlob.fs.dirs;
     RNFetchBlob.config({
       trusty: true,
+      timeout: 600000,
     })
       .fetch(
         'POST',
-        'https://service.eu.apiconnect.ibmcloud.com/gws/apigateway/api/6680cf59d332053774ebff7968541738e498ef46b8d4df20fb25851b3dcca438/compression/audio_compression_app',
+        // 'http://192.168.1.108:3000/api/v1/audio_compression_app',
+        'https://data-compression-platform.eu-gb.cf.appdomain.cloud/api/v1/audio_compression_app',
         {
-          'Content-Type': 'audio/mpeg',
+          'Content-Type': content_type,
         },
         audioData,
       )
@@ -88,36 +100,80 @@ const audioCompression = props => {
         setIsLoading(false);
         console.log('MAYUR: ', resp);
         let info = resp.respInfo;
-        let header = info.headers;
-        let compressedsize = header['Content-Length'];
-        compressedsize = parseInt(compressedsize);
-        compressedsize = compressedsize / 1000000;
-        compressedsize = compressedsize.toString();
-        setCompressedFileSize(
-          'Compressed file size : ' + compressedsize + ' MB',
-        );
-        console.log(compressedsize);
-        let base64str = resp.base64();
-        // console.log(base64str);
-        var path = '/storage/emulated/0/compressed_' + audioName;
-        //var path = RNFS.DocumentDirectoryPath + '/compressed.jpg';
-        console.log('PATH', path);
-        RNFS.writeFile(path, base64str, 'base64')
-          .then(success => {
-            console.log('FILE WRITTEN!');
-          })
-          .catch(err => {
-            console.log(err.message);
-          });
-        alert('Compression Completed !!!');
-        ToastAndroid.showWithGravity(
-          'Compression Completed !!!',
-          ToastAndroid.LONG,
-          ToastAndroid.BOTTOM,
-        );
+        let status_code = info.status;
+        if (status_code === 200) {
+          let header = info.headers;
+          let compressedsize = header['Content-Length'];
+          let base64str = resp.base64();
+          let padding, inBytes, base64StringLength;
+          if (base64str.endsWith('==')) {
+            padding = 2;
+          } else if (base64str.endsWith('=')) {
+            padding = 1;
+          } else {
+            padding = 0;
+          }
+          base64StringLength = base64str.length;
+          console.log(base64StringLength);
+          inBytes = (base64StringLength / 4) * 3 - padding;
+          console.log(inBytes);
+          let size_type = '';
+          let final_size;
+          compressedsize = inBytes / 1000000;
+          if (compressedsize > 1) {
+            final_size = compressedsize;
+            size_type = ' MB';
+          } else {
+            final_size = inBytes / 1000;
+            size_type = ' KB';
+          }
+          setCompressedFileSize(
+            'Compressed file size : ' + final_size + size_type,
+          );
+          setMsg('Compressed Audio is stored in Internal Storage');
+          console.log(compressedsize);
+
+          // console.log(base64str);
+          var path = '/storage/emulated/0/compressed_' + audioName;
+          //var path = RNFS.DocumentDirectoryPath + '/compressed.jpg';
+          console.log('PATH', path);
+          RNFS.writeFile(path, base64str, 'base64')
+            .then(success => {
+              console.log('FILE WRITTEN!');
+            })
+            .catch(err => {
+              console.log(err.message);
+            });
+          ToastAndroid.showWithGravity(
+            'Compression Completed !!!',
+            ToastAndroid.LONG,
+            ToastAndroid.BOTTOM,
+          );
+          Alert.alert(
+            'Status',
+            'Audio successfully compressed !!!',
+            [{text: 'OK', onPress: () => console.log('OK Pressed')}],
+            {cancelable: false},
+          );
+        } else {
+          Alert.alert(
+            'Status',
+            'Some Error has occured, Please try again !!!',
+            [{text: 'OK', onPress: () => console.log('OK Pressed')}],
+            {cancelable: false},
+          );
+          setAlert(true);
+        }
       })
       .catch(err => {
         console.log(err);
+        Alert.alert(
+          'Status',
+          'Some Error has occured, Please try again !!!',
+          [{text: 'OK', onPress: () => console.log('OK Pressed')}],
+          {cancelable: false},
+        );
+        setAlert(true);
       });
   };
 
@@ -133,10 +189,18 @@ const audioCompression = props => {
     audioURI = res.uri;
     audioType = res.type;
     audioSize = res.size;
-    audioSize = parseInt(audioSize);
-    audioSize = audioSize / 1000000;
-    audioSize = audioSize.toString();
-    setFileSize('File Size : ' + audioSize + ' MB');
+    let originalsize;
+    let original_type = '';
+    let audio_s;
+    audio_s = audioSize / 1000000;
+    if (audio_s > 1) {
+      originalsize = audio_s;
+      original_type = ' MB';
+    } else {
+      originalsize = audioSize / 1000;
+      original_type = ' KB';
+    }
+    setFileSize('File Size : ' + originalsize + original_type);
     setSelected(audioName);
     ToastAndroid.showWithGravity(
       'File Selected !',
@@ -151,7 +215,7 @@ const audioCompression = props => {
         <>
           <AnimatedLoader
             visible={isLoading}
-            source={require('./animation.json')}
+            source={require('./infinity-loader.json')}
             animationStyle={styles.lottie}
             speed={1}
           />
@@ -162,7 +226,7 @@ const audioCompression = props => {
       ) : (
         <>
           <View style={styles.fileTextContainer}>
-            <Text style={styles.filetext}>{selectedfile}</Text>
+            <Text style={styles.filetext}>{audioName}</Text>
           </View>
           <View style={styles.fileSizeContainer}>
             <Text style={styles.fileSizeText}>{fileSize}</Text>
@@ -183,6 +247,7 @@ const audioCompression = props => {
           </View>
           <View style={styles.fileSizeContainer}>
             <Text style={styles.fileSizeText}>{compressedFileSize}</Text>
+            <Text style={styles.fileSizeText}>{msg}</Text>
           </View>
         </>
       )}
