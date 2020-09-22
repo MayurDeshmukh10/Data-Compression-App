@@ -26,6 +26,7 @@ const audioCompression = props => {
   let [audioName, setAudioName] = useState('');
   let [myalert, setAlert] = useState(false);
   let [msg, setMsg] = useState('');
+  let [audioSelectCheck, setAudioSelectCheck] = useState(false);
   let audioType = '';
   //let audioData = '';
   let audioURI = '';
@@ -72,6 +73,15 @@ const audioCompression = props => {
   };
 
   const postAudio = () => {
+    if (audioSelectCheck === false) {
+      Alert.alert(
+        'Oops',
+        'Please select a mp3 file',
+        [{text: 'OK', onPress: () => console.log('OK Pressed')}],
+        {cancelable: false},
+      );
+      return;
+    }
     setIsLoading(true);
     console.log(audioData);
     let content_type = '';
@@ -90,7 +100,8 @@ const audioCompression = props => {
       .fetch(
         'POST',
         // 'http://192.168.1.108:3000/api/v1/audio_compression_app',
-        'https://data-compression-platform.eu-gb.cf.appdomain.cloud/api/v1/audio_compression_app',
+        'https://data-compression-platform-updated.eu-gb.cf.appdomain.cloud/api/v1/audio_compression_app',
+        // 'https://data-compression-platform.eu-gb.cf.appdomain.cloud/api/v1/audio_compression_app',
         {
           'Content-Type': content_type,
         },
@@ -202,6 +213,7 @@ const audioCompression = props => {
     }
     setFileSize('File Size : ' + originalsize + original_type);
     setSelected(audioName);
+    setAudioSelectCheck(true);
     ToastAndroid.showWithGravity(
       'File Selected !',
       ToastAndroid.LONG,

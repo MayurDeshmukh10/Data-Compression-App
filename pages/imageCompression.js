@@ -31,19 +31,21 @@ const imageCompression = props => {
   let [imageName, setImageName] = useState('');
   let [myalert, setAlert] = useState(false);
   let [msg, setMsg] = useState('');
+  let [imageSelectCheck, setImageSelectCheck] = useState(false);
 
   let imageType = '';
   let imageURI = '';
   let imagePath = '';
   let imageSize = '';
   let ext = '';
+
   const {navigation} = props;
 
   let options = {
     title: 'Select Image',
-    customButtons: [
-      {name: 'customOptionKey', title: 'Choose Photo from Custom Option'},
-    ],
+    // customButtons: [
+    //   {name: 'customOptionKey', title: 'Choose Photo from Custom Option'},
+    // ],
     storageOptions: {
       skipBackup: true,
       path: 'images',
@@ -84,6 +86,21 @@ const imageCompression = props => {
     requestWritePermission();
     //setCompressedFileSize("");
     ImagePicker.showImagePicker(options, response => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+        setFileSize('Select a image');
+        setImageDisplay('https://img.icons8.com/color/96/000000/image.png');
+        setImageSelectCheck(false);
+        return;
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+        return;
+      } else if (response.customButton) {
+        console.log('User tapped custom button: ', response.customButton);
+        return;
+      } else {
+        const source = {uri: response.uri};
+      }
       console.log('Response = ', response);
       imageType = response.type;
       imageURI = response.uri;
@@ -109,25 +126,11 @@ const imageCompression = props => {
         originalsize = imageSize1 / 1000;
         original_type = 'KB';
       }
+      setImageSelectCheck(true);
       // imageSize1 = parseInt(imageSize);
       // imageSize = imageSize1 / 1000000;
       // imageSize = imageSize.toString();
       setFileSize('Image Size : ' + originalsize + original_type);
-
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-      } else if (response.error) {
-        console.log('ImagePicker Error: ', response.error);
-      } else if (response.customButton) {
-        console.log('User tapped custom button: ', response.customButton);
-      } else {
-        const source = {uri: response.uri};
-
-        // window.location.reload(false);
-
-        // You can also display the image using data:
-        // const source = { uri: 'data:image/jpeg;base64,' + response.data };
-      }
     });
   };
 
@@ -136,6 +139,16 @@ const imageCompression = props => {
   }, []);
 
   const postImage = () => {
+    if (imageSelectCheck === false) {
+      Alert.alert(
+        'Oops',
+        'Please select a Image',
+        [{text: 'OK', onPress: () => console.log('OK Pressed')}],
+        {cancelable: false},
+      );
+      setAlert(true);
+      return;
+    }
     setIsLoading(true);
     let content_type = '';
     ext = imageName.split('.').pop();
@@ -160,7 +173,8 @@ const imageCompression = props => {
       .fetch(
         'POST',
         // 'http://192.168.1.108:3000/api/v1/image_compression_app',
-        'https://data-compression-platform.eu-gb.cf.appdomain.cloud/api/v1/image_compression_app',
+        'https://data-compression-platform-updated.eu-gb.cf.appdomain.cloud/api/v1/image_compression_app',
+        // 'https://data-compression-platform.eu-gb.cf.appdomain.cloud/api/v1/image_compression_app',
         {
           'Content-Type': content_type,
         },

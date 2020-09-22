@@ -25,6 +25,7 @@ const videoCompression = props => {
   let [compressedFileSize, setCompressedFileSize] = useState('');
   let [videoName, setVideoName] = useState('');
   let [msg, setMsg] = useState('');
+  let [videoSelectCheck, setVideoSelectCheck] = useState(false);
   let audioType = '';
   //let audioData = '';
   let audioURI = '';
@@ -72,6 +73,15 @@ const videoCompression = props => {
   };
 
   const postVideo = () => {
+    if (videoSelectCheck === false) {
+      Alert.alert(
+        'Oops',
+        'Please select a mp4 file',
+        [{text: 'OK', onPress: () => console.log('OK Pressed')}],
+        {cancelable: false},
+      );
+      return;
+    }
     setIsLoading(true);
     console.log(videoData);
     let dirs = RNFetchBlob.fs.dirs;
@@ -82,7 +92,8 @@ const videoCompression = props => {
       .fetch(
         'POST',
         // 'http://192.168.1.108:3000/api/v1/video_compression_app',
-        'https://data-compression-platform.eu-gb.cf.appdomain.cloud/api/v1/video_compression_app',
+        'https://data-compression-platform-updated.eu-gb.cf.appdomain.cloud/api/v1/video_compression_app',
+        // 'https://data-compression-platform.eu-gb.cf.appdomain.cloud/api/v1/video_compression_app',
         {
           'Content-Type': 'video/mp4',
         },
@@ -170,7 +181,7 @@ const videoCompression = props => {
   const selectVideo = async () => {
     requestWritePermission();
     const res = await DocumentPicker.pick({type: [DocumentPicker.types.video]});
-    //console.log(res);
+    console.log(res);
     const exportedFileContent = await RNFS.readFile(res.uri, 'base64');
     //audioData = exportedFileContent;
     setvideoData(exportedFileContent);
@@ -194,6 +205,7 @@ const videoCompression = props => {
     }
     setFileSize('File Size : ' + originalsize + original_type);
     setSelected(res.name);
+    setVideoSelectCheck(true);
     ToastAndroid.showWithGravity(
       'File Selected !',
       ToastAndroid.LONG,
