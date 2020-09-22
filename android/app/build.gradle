@@ -144,10 +144,10 @@ android {
     }
     signingConfigs {
         release {
-    		storeFile file('your_key_name.keystore')
-      		storePassword 'reaper'
-      		keyAlias 'reaper'
-      		keyPassword 'reaper'
+    		storeFile file('release_key.keystore')
+      		storePassword 'Mayur@1092'
+      		keyAlias 'Mayur@1092'
+      		keyPassword 'Mayur@1092'
 
    	}
 

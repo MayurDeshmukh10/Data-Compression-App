@@ -5,6 +5,7 @@
   "dependencies": {
     "@react-native-community/async-storage": "^1.7.1",
     "@react-native-community/masked-view": "^0.1.6",
+    "@react-native-community/toolbar-android": "^0.1.0-rc.2",
     "babel-plugin-transform-inline-environment-variables": "^0.4.3",
     "eslint-plugin-jsx-a11y": "^6.2.3",
     "eslint-plugin-react-hooks": "^1.7.0",
